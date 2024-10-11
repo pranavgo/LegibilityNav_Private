@@ -1,0 +1,23 @@
+model_predictor: CV_MPPI
+params:
+  dt: 0.25
+  prediction_horizon: 1.5
+  history_length: 1
+  log_cost: True
+
+  action:
+    span: 360
+    n_actions: 10
+  
+  cost: # Only applicable to MPC controller
+    sigma:
+      h: 0.6
+      s: 0.6
+      r: 0.9
+    q:
+      obs: 100.0
+      goal: 1.0
+      wind: 5.0
+      dev: 1.0
+    
+    discrete_cost_type: "winding"
