@@ -197,7 +197,6 @@ class CrowdSim(gym.Env):
             if self.multi_policy:
                 if policy == 'static':
                     human = Human(self.config, 'humans', policy=policy_factory['linear']())
-                    human.set(2, 2, 2, 4, 0, 0, np.pi / 2)
                 else:
                     human = Human(self.config, 'humans', policy=policy_factory[policy]())
             else:
@@ -208,6 +207,10 @@ class CrowdSim(gym.Env):
         if policy == 'static':
             human.set(0.5, 3, 2, 4, 0, 0, np.pi / 2)
             human.v_pref = 1e-4
+        if policy == 'socialforce':
+            human.set(1.8, 4, 0, -4, 0, 0, np.pi / 2)
+
+
         return human
 
     def reset(self, phase='test', scenario=None, goals=None, test_case=None):

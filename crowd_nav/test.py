@@ -59,7 +59,7 @@ def main_experiments(args):
 
     # configure policy
     policy_config = config.PolicyConfig(args.debug)
-    if args.policy == 'vecmpc' or args.policy == 'vecmppi' or args.policy == 'legible':
+    if args.policy == 'vecmpc' or args.policy == 'vecmppi' or args.policy == 'legible' or args.policy == 'sm_legible':
         env_config = config.EnvConfig(args.debug)
         policy = policy_factory[args.policy](env_config)
     elif args.policy == 'orca' or args.policy == 'sfm' or args.policy == 'cv' or args.policy == 'reactive':
