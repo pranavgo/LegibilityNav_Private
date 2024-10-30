@@ -59,7 +59,7 @@ def main_experiments(args):
 
     # configure policy
     policy_config = config.PolicyConfig(args.debug)
-    if args.policy == 'vecmpc' or args.policy == 'vecmppi' or args.policy == 'legible' or args.policy == 'sm_legible':
+    if args.policy == 'vecmpc' or args.policy == 'vecmppi' or args.policy == 'legible' or args.policy == 'sm_legible' or args.policy == 'lpsnav':
         env_config = config.EnvConfig(args.debug)
         policy = policy_factory[args.policy](env_config)
     elif args.policy == 'orca' or args.policy == 'sfm' or args.policy == 'cv' or args.policy == 'reactive':
@@ -318,7 +318,7 @@ if __name__ == '__main__':
     parser.add_argument('--square', default=False, action='store_true')
     parser.add_argument('--circle', default=False, action='store_true')
     parser.add_argument('--scenario', type=str, default='circle')
-    parser.add_argument('--video_file', type=str, default='legible.mp4')
+    parser.add_argument('--video_file', type=str, default=None)
     parser.add_argument('--video_dir', type=str, default='./')
     parser.add_argument('--results_file', type=str, default='results.json')
     parser.add_argument('--traj', default=False, action='store_true')

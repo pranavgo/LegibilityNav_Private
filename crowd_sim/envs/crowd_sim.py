@@ -15,7 +15,7 @@ from crowd_sim.envs.utils.state import tensor_to_joint_state, JointState
 from crowd_sim.envs.utils.action import ActionRot, ActionXY
 from crowd_sim.envs.utils.human import Human
 from crowd_sim.envs.utils.info import *
-import crowd_sim.envs.utils.utils as utils
+# import crowd_sim.envs.utils.utils as utils
 from crowd_sim.envs.policy.orca import ORCA
 from crowd_sim.envs.policy.linear import Linear
 from crowd_sim.envs.policy.socialforce import SocialForce
@@ -205,7 +205,7 @@ class CrowdSim(gym.Env):
                 human.sample_random_attributes()
         human.set(*state)
         if policy == 'static':
-            human.set(0.5, 3, 2, 4, 0, 0, np.pi / 2)
+            human.set(2, 3, 2, 4, 0, 0, np.pi / 2)
             human.v_pref = 1e-4
         if policy == 'socialforce':
             human.set(1.8, 4, 0, -4, 0, 0, np.pi / 2)
