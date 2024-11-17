@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.optimize import minimize
 import math
+from shapely.geometry import Point
+from shapely.geometry import MultiPolygon, Polygon
 
 class AncaLegible():
     def __init__(self, goal, other_goals, start, current_trajectory, nframes, skipFrames, legible_horizon):
@@ -18,7 +20,6 @@ class AncaLegible():
             self.currentTraj.append(np.array([0,0]))
 
     def LegibleCost(self, t, state, **kwargs):
-        # legibility = 0.0
         if t not in self.skipFrames:
             self.currentTraj[self.control_pts + t] = state
             weight = 1 - ((t + self.control_pts)/( self.nframes + self.control_pts))
@@ -68,15 +69,14 @@ class AncaLegible():
         return P, tc
     
 class MPCLocalPlanner(AncaLegible):
-    def __init__(self, horizon, dt, obstacles, line_obstacles, goal, other_goals, start, nframes, skipFrames, robot_radius, max_speed, current_trajectory, legible_horizon):
+    def __init__(self, horizon, dt, obstacles, static_obstacles, goal, other_goals, start, nframes, skipFrames, robot_radius, max_speed, current_trajectory, legible_horizon):
         super().__init__(goal, other_goals, start, current_trajectory, nframes, skipFrames, legible_horizon)
         self.horizon = horizon
         self.dt = dt
         self.obstacles = obstacles
         self.robot_radius = robot_radius
         self.max_speed = max_speed
-
-        self.line_obs = line_obstacles
+        self.static_obs = static_obstacles
 
     def objective(self, u, current_state):
         trajectory = self.simulate_trajectory(current_state, u)
@@ -84,6 +84,7 @@ class MPCLocalPlanner(AncaLegible):
         for t, state in enumerate(trajectory):
             cost += self.LegibleCost(t, state)
             cost += self.obstacle_cost(state)
+            cost += self.collision_avoidance_cost(state)
         return cost
 
     def simulate_trajectory(self, initial_state, controls):
@@ -115,19 +116,21 @@ class MPCLocalPlanner(AncaLegible):
             dist = np.sqrt((x - ox)**2 + (y - oy)**2)
             if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 3.5/dist
-
-        # for j, line in enumerate(self.line_obs): # for each line obstacle obstacle
-        #     arc_delta_obj = self.point_to_segment_dist(line[0][0], line[0][1], line[1][0], line[1][1], x, y)
-        #     # if the obstacle intersects with a point on the arc. i.e. there is a collision on the arc
-        #     if arc_delta_obj < 0.01:
-        #         # calculate distance to obstacle from robot's current position
-        #         cost =+ 0.01*(arc_delta_obj)
-
+                cost =+ 10/dist
         return (cost)
-
-
     
+    def collision_avoidance_cost(self,state):
+        polygons = []
+        for obs in self.static_obs:
+            polygons.append(Polygon(obs))
+        polygon = MultiPolygon(polygons)
+        Point_state = Point(state)
+        if polygon.contains(Point_state):
+            cost = 10
+        else:
+            cost =  -1
+        return cost
+
     def point_to_segment_dist(self, x1, y1, x2, y2, x3, y3):
         px = x2 - x1
         py = y2 - y1

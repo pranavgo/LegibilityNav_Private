@@ -24,6 +24,7 @@ class Legible(Policy):
         self.line_obs = []
         self.current_trajectory = []
         self.iter = 0
+        self.static_obstacles = [[(-5, 5), (-1, 5), (-1, 1), (-5, 1)],[(5, 5), (1, 5), (1, 1), (5, 1)],[(5, -5), (1, -5), (1, -1), (5, -1)], [(-5, -5), (-1, -5), (-1, -1), (-5, -1)]]
 
 
 
@@ -36,19 +37,11 @@ class Legible(Policy):
         if len(self.ob) != len(state.human_states):
             self.ob = np.zeros((len(state.human_states), 3))
 
-        arr1 = np.array([[-2, -5], [-2, 5]])
-        arr2 = np.array([[2, -5], [2, 5]])
-        arr3 = np.array([[-2, -5], [2, -5]])
-        arr4 = np.array([[-2, 5], [2, 5]])
-
-
-        array_list = [arr1, arr2, arr3, arr4]
-        self.line_obs = array_list
         # update state of obstacles for the sim_config
         for idx, human_state in enumerate(state.human_states):
             self.ob[idx, :] = [human_state.position[0], human_state.position[1], human_state.radius]
         # Initialize MPCLocalPlanner
-        mpc_planner = MPCLocalPlanner(self.horizon, self.dt, obstacles = self.ob, line_obstacles = self.line_obs, max_speed=self.max_speed, goal = self_state.goal_position, robot_radius=self.radius, other_goals=self.other_goals, start=self.current_trajectory[0], nframes=11, skipFrames=[], current_trajectory = copy.deepcopy(self.current_trajectory), legible_horizon = self.legible_horizon)
+        mpc_planner = MPCLocalPlanner(self.horizon, self.dt, obstacles = self.ob, static_obstacles = self.static_obstacles, max_speed=self.max_speed, goal = self_state.goal_position, robot_radius=self.radius, other_goals=self.other_goals, start=self.current_trajectory[0], nframes=11, skipFrames=[], current_trajectory = copy.deepcopy(self.current_trajectory), legible_horizon = self.legible_horizon)
 
         # Plan a trajectory
         optimal_controls = mpc_planner.plan([self_state.px,self_state.py])

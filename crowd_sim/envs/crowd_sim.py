@@ -19,6 +19,8 @@ import crowd_sim.envs.utils.utils as utils
 from crowd_sim.envs.policy.orca import ORCA
 from crowd_sim.envs.policy.linear import Linear
 from crowd_sim.envs.policy.socialforce import SocialForce
+from shapely.geometry import Point
+from shapely.geometry import MultiPolygon, Polygon
 
 
 class CrowdSim(gym.Env):
@@ -152,6 +154,8 @@ class CrowdSim(gym.Env):
                 logging.warning('Current socialforce policy only works in decentralized way with visible robot!')
             self.centralized_planner = policy_factory['centralized_' + human_policy]()
 
+        if config.env.obstacle:
+            self.static_obstacles = config.env.static_obstacles
         self.orca_border = self.create_border_orca(config.env.dx_range, config.env.dy_range)
         self.sfm_border = self.create_border_sfm(config.env.dx_range, config.env.dy_range)
         self.x_width = (config.env.dx_range[1] - config.env.dx_range[0]) - (2 * config.robot.radius + 1e-2)
@@ -172,7 +176,7 @@ class CrowdSim(gym.Env):
         self.robot = robot
 
     def create_border_orca(self, dx_range, dy_range):
-        return [(dx_range[0], dy_range[1]), (dx_range[1], dy_range[1]), (dx_range[1], dy_range[0]), (dx_range[0], dy_range[0])]
+        return [[(dx_range[0], dy_range[1]), (dx_range[1], dy_range[1]), (dx_range[1], dy_range[0]), (dx_range[0], dy_range[0])]]
     
     def create_border_sfm(self, dx_range, dy_range):
         lower = [dx_range[0], dx_range[1], dy_range[0] - 1, dy_range[0]]
@@ -192,7 +196,7 @@ class CrowdSim(gym.Env):
             
         return min_dist
     
-    def generate_human_from_state(self, policy, state, human=None):
+    def generate_human_from_state(self, policy, state, test_state, human=None):
         if human is None:
             if self.multi_policy:
                 if policy == 'static':
@@ -205,10 +209,11 @@ class CrowdSim(gym.Env):
                 human.sample_random_attributes()
         human.set(*state)
         if policy == 'static':
-            human.set(0.5, 3, 2, 4, 0, 0, np.pi / 2)
+            human.set(test_state[0],test_state[1],test_state[2],test_state[3],test_state[4],test_state[5],test_state[6])
             human.v_pref = 1e-4
-        if policy == 'socialforce':
-            human.set(1.8, 4, 0, -4, 0, 0, np.pi / 2)
+        if self.config.env.test:
+            if policy == 'socialforce' or policy == 'linear' or policy == "orca":
+                human.set(test_state[0],test_state[1],test_state[2],test_state[3],test_state[4],test_state[5],test_state[6])
 
 
         return human
@@ -238,7 +243,7 @@ class CrowdSim(gym.Env):
         self.min_dist_overall = 1e6
         self.robot_velocities = []
 
-        self.robot.set(0, -4, 2, 4, 0, 0, np.pi / 2)
+        self.robot.set(self.config.env.robot_state[0],self.config.env.robot_state[1],self.config.env.robot_state[2],self.config.env.robot_state[3],self.config.env.robot_state[4],self.config.env.robot_state[5],self.config.env.robot_state[6])
         if self.case_counter[phase] >= 0:
             seed = base_seed[phase] + self.case_counter[phase] + 0
             if self.random_seed:
@@ -254,12 +259,11 @@ class CrowdSim(gym.Env):
                 human_num = self.human_num
             self.humans = []
             if self.multi_policy:
-                print()
                 if scenario is not None:
                     #print("RESET TIME")
                     for policy in scenario:
                         for n in range(len(scenario[policy])):
-                            human = self.generate_human_from_state(policy, scenario[policy][n])
+                            human = self.generate_human_from_state(policy, scenario[policy][n], test_state = self.config.env.agent_state[n])
                             self.humans.append(human)
                             human.goals = goals[policy][n]
                             #print("STATE: ", scenario[policy][n])
@@ -322,46 +326,85 @@ class CrowdSim(gym.Env):
     def onestep_lookahead(self, action):
         return self.step(action, update=False)
     
-    def outside_check(self, agent_state, obstacle, action):
+    def outside_check(self, agent_state, borders, action):
         #print("KINEMATICS: ", self.robot.kinematics)
         if agent_state.kinematics == 'holonomic':
-            px = agent_state.px + action.vx * self.time_step
-            py = agent_state.py + action.vy * self.time_step
+            for border in borders:
+                px = agent_state.px + action.vx * (self.time_step)
+                py = agent_state.py + action.vy * (self.time_step)
+                left = px - agent_state.radius < border[0][0]
+                right = px + agent_state.radius > border[1][0]
+                if left or right:
+                    vx = 0.0
+                else:
+                    vx = action.vx
 
-            left = px - agent_state.radius < obstacle[0][0]
-            right = px + agent_state.radius > obstacle[1][0]
-            if left or right:
+                below = py - agent_state.radius < border[2][1]
+                above = py + agent_state.radius > border[1][1]
+                if below or above:
+                    vy = 0.0
+                else:
+                    vy = action.vy
+            return ActionXY(vx, vy)
+        else:
+            for border in borders:
+                theta = agent_state.theta + action.r
+                px = agent_state.px + np.cos(theta) * action.v * self.time_step
+                py = agent_state.py + np.sin(theta) * action.v * self.time_step
+                left = px - agent_state.radius < border[0][0]
+                right = px + agent_state.radius > border[1][0]
+                if left or right:
+                    v = 0.0
+                else:
+                    v = action.v
+
+                below = py - agent_state.radius < border[2][1]
+                above = py + agent_state.radius > border[1][1]
+                if below or above:
+                    v = 0.0
+                else:
+                    v = action.v
+            return ActionRot(v, action.r)
+    def static_collison_avoidance(self, agent_state, obstacles, action):
+        #print("KINEMATICS: ", self.robot.kinematics)
+        if agent_state.kinematics == 'holonomic':
+            px = agent_state.px + action.vx * (self.time_step)
+            py = agent_state.py + action.vy * (self.time_step)
+            point_y = Point([agent_state.px,py])
+            point_x = Point([px,agent_state.py])
+            polygons = []
+            for obstacle in obstacles:
+                polygon = Polygon(obstacle)
+                polygons.append(polygon)
+            polygons = MultiPolygon(polygons)
+            if polygons.buffer(0.35).contains(point_x):
                 vx = 0.0
             else:
                 vx = action.vx
-
-            below = py - agent_state.radius < obstacle[2][1]
-            above = py + agent_state.radius > obstacle[1][1]
-            if below or above:
+            if polygons.buffer(0.35).contains(point_y):
                 vy = 0.0
             else:
                 vy = action.vy
-
             return ActionXY(vx, vy)
         else:
             theta = agent_state.theta + action.r
             px = agent_state.px + np.cos(theta) * action.v * self.time_step
             py = agent_state.py + np.sin(theta) * action.v * self.time_step
-
-            left = px - agent_state.radius < obstacle[0][0]
-            right = px + agent_state.radius > obstacle[1][0]
-            if left or right:
+            point_y = Point([agent_state.px,py])
+            point_x = Point([px,agent_state.py])
+            polygons =[]
+            for obstacle in obstacles:
+                polygon = Polygon(obstacle)
+                polygons.append(polygon)
+            polygons = MultiPolygon(polygons)
+            if polygons.buffer(0.35).contains(point_x):
+                v = 0.0
+            else:
+                vx = action.v
+            if polygons.buffer(0.35).contains(point_y):
                 v = 0.0
             else:
                 v = action.v
-
-            below = py - agent_state.radius < obstacle[2][1]
-            above = py + agent_state.radius > obstacle[1][1]
-            if below or above:
-                v = 0.0
-            else:
-                v = action.v
-
             return ActionRot(v, action.r)
 
     def step(self, action, update=True, baseline=None):
@@ -491,6 +534,8 @@ class CrowdSim(gym.Env):
             self.robot.step(action)
             for human, action in zip(self.humans, human_actions):
                 action = self.outside_check(human, self.orca_border, action)
+                if self.config.env.obstacle:
+                    action = self.static_collison_avoidance(human,self.static_obstacles,action)
                 human.step(action)
 
                 if human.reached_destination():
@@ -637,17 +682,25 @@ class CrowdSim(gym.Env):
             goal = mlines.Line2D([self.robot.gx], [self.robot.gy],
                                  color=robot_color, marker='*', linestyle='None',
                                  markersize=15, label='Goal')
-            other_goals = mlines.Line2D([self.other_goals[:,0]], [self.other_goals[:,1]],
-                                color='blue', marker='*', linestyle='None',
-                                markersize=15, label='Goal')
+            if self.other_goals is not None:
+                other_goals = mlines.Line2D([self.other_goals[:,0]], [self.other_goals[:,1]],
+                                    color='blue', marker='*', linestyle='None',
+                                    markersize=15, label='Goal')
+                ax.add_artist(other_goals)
+
             robot = plt.Circle(robot_positions[0], self.robot.radius, fill=True, color=robot_color)
             # sensor_range = plt.Circle(robot_positions[0], self.robot_sensor_range, fill=False, ls='dashed')
             ax.add_artist(robot)
             ax.add_artist(goal)
-            ax.add_artist(other_goals)
-            for i in range(3):
-                ax.plot([self.orca_border[i][0], self.orca_border[i+1][0]], [self.orca_border[i][1], self.orca_border[i+1][1]], color='black')
-            ax.plot([self.orca_border[3][0], self.orca_border[0][0]], [self.orca_border[3][1], self.orca_border[0][1]], color='black')
+            if self.config.env.obstacle:
+                for obstacle in self.static_obstacles:
+                    rect = patches.Polygon(obstacle, linewidth=1, edgecolor='black', facecolor='dimgray')
+                    ax.add_patch(rect)
+
+            for border in self.orca_border:
+                for i in range(3):
+                    ax.plot([border[i][0], border[i+1][0]], [border[i][1], border[i+1][1]], color='black')
+                ax.plot([border[3][0], border[0][0]], [border[3][1], border[0][1]], color='black')
 
             human_colors = []
             for h in self.humans:

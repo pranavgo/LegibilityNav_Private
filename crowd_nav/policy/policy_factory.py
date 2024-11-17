@@ -9,6 +9,7 @@ from crowd_nav.policy.model_predictive_rl import ModelPredictiveRL
 from crowd_nav.policy.vecMPC.controller import vecMPC
 from crowd_nav.policy.vecMPC.controller_mppi import vecMPPI
 from crowd_nav.policy.social_momentum import SMLegible
+from crowd_nav.policy.lpsnav import LPSnavLegible
 
 policy_factory['cadrl'] = CADRL
 policy_factory['lstm_rl'] = LstmRL
@@ -20,3 +21,4 @@ policy_factory['vecmppi'] = vecMPPI
 policy_factory['dwa'] = DynamicWindowApproach
 policy_factory['legible'] = Legible
 policy_factory['sm_legible'] = SMLegible
+policy_factory['lpsnav'] = LPSnavLegible

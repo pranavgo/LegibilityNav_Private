@@ -53,13 +53,14 @@ def main_experiments(args):
     spec.loader.exec_module(config)
 
     ec = config.ExperimentsConfig(args.debug)
-    scenarios, goals = utils.random_sequence(ec)
-
+    en = config.EnvConfig(args.debug)
+    scenarios, goals = utils.random_sequence(ec,en)
+  
     baseline = None
 
     # configure policy
     policy_config = config.PolicyConfig(args.debug)
-    if args.policy == 'vecmpc' or args.policy == 'vecmppi' or args.policy == 'legible' or args.policy == 'sm_legible':
+    if args.policy == 'vecmpc' or args.policy == 'vecmppi' or args.policy == 'legible' or args.policy == 'sm_legible' or args.policy == 'lpsnav':
         env_config = config.EnvConfig(args.debug)
         policy = policy_factory[args.policy](env_config)
     elif args.policy == 'orca' or args.policy == 'sfm' or args.policy == 'cv' or args.policy == 'reactive':
@@ -90,8 +91,8 @@ def main_experiments(args):
         if args.human_num is not None:
             env_config.sim.human_num = args.human_num
         env = gym.make('CrowdSim-v0')
-        e = 1
-        se = 1
+        e = 0
+        se = 0
 
         env_config.env.dx_range = ec.exp.dx[e][se]
         env_config.env.dy_range = ec.exp.dy[e][se]
@@ -274,8 +275,6 @@ def main_experiments(args):
 
                     train_config = config.TrainConfig(args.debug)
                     epsilon_end = train_config.train.epsilon_end
-                    if not isinstance(robot.policy, ORCA):
-                        robot.policy.set_epsilon(epsilon_end)
 
                     policy.set_phase(args.phase)
                     policy.set_device(device)

@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.linalg import norm
 import random
+from shapely.geometry import Point
+from shapely.geometry import MultiPolygon, Polygon
 
 def point_to_segment_dist(x1, y1, x2, y2, x3, y3):
     """
@@ -123,7 +125,7 @@ def get_goal_sequence(num_goals, g, current_scenario, x_width, y_width):
 
     return goals
 
-def generate_human_state(agents, x_width, y_width, discomfort_dist, policy=None, current_scenario='passing_crossing'):
+def generate_human_state(agents, x_width, y_width, discomfort_dist, policy=None, current_scenario='passing_crossing', obstacles = None):
         params = None
         if current_scenario == 'circle_crossing':
             while True:
@@ -200,7 +202,7 @@ def generate_human_state(agents, x_width, y_width, discomfort_dist, policy=None,
 
         return params, current_scenario
 
-def generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, num_orca, num_sf, num_linear, num_static, current_scenario):
+def generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, num_orca, num_sf, num_linear, num_static, current_scenario, obstacles):
         states = []
         goals = []
         num_policies = {
@@ -216,13 +218,14 @@ def generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, 
             for policy in num_policies:
                 for _ in range(num_policies[policy]):
                     if policy in states_i:
-                        params, current_scenario_mod = generate_human_state(agents, x_width, y_width, discomfort_dist, policy=policy, current_scenario=current_scenario)
+                        params, current_scenario_mod = generate_human_state(agents, x_width, y_width, discomfort_dist, policy=policy, current_scenario=current_scenario, obstacles=obstacles)
+                        
                         states_i[policy].append(params)
                         goal_list = get_goal_sequence(100, (params[2], params[3]), current_scenario_mod, x_width, y_width)
                         goals_i[policy].append(goal_list)
                         agents.append(params)
                     else:
-                        params, current_scenario_mod = generate_human_state(agents, x_width, y_width, discomfort_dist, policy=policy, current_scenario=current_scenario)
+                        params, current_scenario_mod = generate_human_state(agents, x_width, y_width, discomfort_dist, policy=policy, current_scenario=current_scenario, obstacles=obstacles)
                         states_i[policy] = [params]
                         goals_i[policy] = [get_goal_sequence(100, (params[2], params[3]), current_scenario_mod, x_width, y_width)]
             states.append(states_i)
@@ -230,7 +233,7 @@ def generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, 
 
         return states, goals
 
-def random_sequence(ec, length=500, radius=0.3, discomfort_dist=0.2): #Does not work with randomized radii yet, fixed at 0.3m for now
+def random_sequence(ec,en, length=500, radius=0.3, discomfort_dist=0.2): #Does not work with randomized radii yet, fixed at 0.3m for now
     if ec.exp.random_seed:
         seed = np.random.randint(1000, 10000)
     else:
@@ -253,8 +256,10 @@ def random_sequence(ec, length=500, radius=0.3, discomfort_dist=0.2): #Does not 
             num_static = ec.exp.num_static[e][se][0]
             num_linear = ec.exp.num_linear[e][se][0]
             test_scenario = ec.exp.scenarios[e][se]
-
-            s, g = generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, num_orca, num_sf, num_linear, num_static, test_scenario)
+            if en.env.obstacle:
+                s, g = generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, num_orca, num_sf, num_linear, num_static, test_scenario,en.env.static_obstacles)
+            else:
+                s, g = generate_scenarios_fixed(length, radius, x_width, y_width, discomfort_dist, num_orca, num_sf, num_linear, num_static, test_scenario,None)
             scenarios_e.append(s)
             goals_e.append(g)
         

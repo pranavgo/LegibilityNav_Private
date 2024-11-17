@@ -9,25 +9,39 @@ class Config(object):
 class BaseExperimentsConfig(object):
     exp = Config()
 
-    exp.num_orca = [[[2], [5], [7], [10], [12], [15], [17]], [[1], [4], [2], [3], [3], [4], [4]], [[7], [7], [7], [7], [7]], [[0], [15], [7], [5], [4]]]
-    exp.num_sf = [[[3], [5], [8], [10], [13], [15], [18]], [[2], [0], [3], [3], [4], [4], [5]], [[8], [8], [8], [8], [8]], [[15], [0], [8], [5], [4]]]
+    ### experiments
+    # exp.num_orca = [[[2], [5], [7], [10], [12], [15], [17]], [[1], [1], [2], [3], [3], [4], [4]], [[7], [7], [7], [7], [7]], [[0], [15], [7], [5], [4]]]
+    # exp.num_sf = [[[3], [5], [8], [10], [13], [15], [18]], [[2], [0], [3], [3], [4], [4], [5]], [[8], [8], [8], [8], [8]], [[15], [0], [8], [5], [4]]]
 
-    exp.num_linear = [[[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0]], [[0], [0], [0], [2], [4]]]
-    exp.num_static = [[[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0]], [[0], [0], [0], [3], [3]]]
+    # exp.num_linear = [[[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0]], [[0], [0], [0], [2], [4]]]
+    # exp.num_static = [[[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0], [0], [0]], [[0], [0], [0], [0], [0]], [[0], [0], [0], [3], [3]]]
 
-    exp.randomize_attributes = [[False, False, False, False, False, False, False], [False, False, False, False, False, False, False], [False, False, False, False, False], [False, False, False, False, False]]
+        
+    # exp.dx = [[[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]], [[-0.75, 0.75], [-5, 5], [-1.25, 1.25], [-1.5, 1.5], [-1.75, 1.75], [-2, 2], [-2.25, 2.25]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-6, 6]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]]]
+    # exp.dy = [[[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-6, 6]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]]]
     
-    exp.scenarios = [['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing'],
-                             ['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing'],
-                             ['passing', 'crossing', 'passing_crossing', 'random', 'circle_crossing'],
-                             ['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing']]
+    # exp.randomize_attributes = [[False, False, False, False, False, False, False], [False, False, False, False, False, False, False], [False, False, False, False, False], [False, False, False, False, False]]
+    
+    # exp.scenarios = [['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing'],
+    #                          ['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing'],
+    #                          ['passing', 'crossing', 'passing_crossing', 'random', 'circle_crossing'],
+    #                          ['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing']]
+
+    ###visualize####
+    exp.num_orca = [[[1]]]
+    exp.num_sf = [[[0]]]
+    exp.num_linear = [[[0]]]
+    exp.num_static = [[[0]]]
+    exp.randomize_attributes = [[False]]
+    
+    exp.scenarios = [['passing_crossing']]
     
     exp.parameter_sweep = None
     exp.sigma = [0.3, 0.6, 0.9]
     exp.q = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
     
-    exp.dx = [[[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]], [[-0.75, 0.75], [-5, 5], [-1.25, 1.25], [-1.5, 1.5], [-1.75, 1.75], [-2, 2], [-2.25, 2.25]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-6, 6]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]]]
-    exp.dy = [[[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-6, 6]], [[-5, 5], [-5, 5], [-5, 5], [-5, 5], [-5, 5]]]
+    exp.dx = [[[-5, 5]]]
+    exp.dy = [[[-5, 5]]]
     
     exp.parameter_sweep = None
     exp.sigma = [0.3, 0.6, 0.9]
@@ -35,7 +49,6 @@ class BaseExperimentsConfig(object):
     exp.noise = [1.0, 2.0, 3.0, 4.0, 5.0]
     exp.samples = [100, 250, 500, 1000]
     exp.horizon = [3, 4, 5, 6, 7]
-
     exp.random_seed = True
     
     def __init__(self, debug=False):
@@ -46,13 +59,19 @@ class BaseEnvConfig(object):
     env.time_limit = 50
     env.time_step = 0.25
     env.val_size = 500
-    env.test_size = 500
+    env.test_size = 2
     env.train_size = np.iinfo(np.uint32).max - 2000
-    env.randomize_attributes = False #TODO: Make this work with pre-generating scenarios
+    env.randomize_attributes = False 
+    #TODO: Make this work with pre-generating scenarios
     env.robot_sensor_range = 5
     env.dx_range = [-5, 5]
     env.dy_range = [-5, 5]
-    env.other_goals = np.array([[-2,4]])
+    env.other_goals = None # env.other_goals = np.array([[-4,0],[4,0]])
+    env.obstacle = False
+    env.test = True #if true all policy will the below agent state for spawning humans
+    env.static_obstacles = [[(-5, 5), (-1, 5), (-1, 1), (-5, 1)],[(5, 5), (1, 5), (1, 1), (5, 1)],[(5, -5), (1, -5), (1, -1), (5, -1)], [(-5, -5), (-1, -5), (-1, -1), (-5, -1)]]
+    env.agent_state = [[-2, 0, 4, 0, 0, 0, np.pi / 2]] #position for agents when static or when test is true
+    env.robot_state = [0, -4, 0, 4, 0, 0, np.pi / 2]
 
     reward = Config()
     reward.success_reward = 1
