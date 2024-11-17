@@ -8,19 +8,19 @@ from shapely.geometry import MultiPolygon, Polygon
 
 
 class LPSnav():
-    def __init__(self, state, start):
+    def __init__(self, state, start, max_cost, max_speed, receding_horiz, sensing_dist, sensing_horiz, prim_horiz, subgoal_priors, long_space, lat_space):
         self.state = state
         self.interacting_agents = []
         self.agent_weights = []
-        self.max_cost = 1e2
-        self.max_speed = 1
-        self.sensing_dist = 4
-        self.receding_horiz = 2
-        self.prim_horiz = 1
-        self.sensing_horiz = 2*self.receding_horiz
-        self.subgoal_priors = np.array([0.48, 0.01, 0.5])
-        self.long_space = [0.1, 0.2]
-        self.lat_space = [0.1, 0.2]
+        self.max_cost = max_cost
+        self.max_speed = max_speed
+        self.sensing_dist = sensing_dist
+        self.receding_horiz = receding_horiz
+        self.prim_horiz = prim_horiz
+        self.sensing_horiz = sensing_horiz
+        self.subgoal_priors = subgoal_priors
+        self.long_space = long_space
+        self.lat_space = lat_space
         self.cost_rt = self.receding_horiz
         self.cost_tg = {}
         self.pred_pos = {}
@@ -29,7 +29,7 @@ class LPSnav():
         self.cost_tpg = {}
         self.current_leg_score = {}
         self.pred_int_lines = {}
-        self.cost_tp = 1
+        self.cost_tp = self.prim_horiz
         self.int_lines = defaultdict(list)
         self.max_goal_score = np.linalg.norm(np.array(self.state.robot_state.goal_position) - start)
 
@@ -127,11 +127,10 @@ class LPSnav():
         
     
 class MPCLocalPlanner(LPSnav):
-    def __init__(self, horizon, dt, obstacles, static_obstacles, robot_radius, max_speed, sim_state, start):
-        super().__init__(sim_state, start)
+    def __init__(self, horizon, dt, static_obstacles, robot_radius, max_speed, sim_state, start, max_cost, receding_horiz, sensing_dist, sensing_horiz, prim_horiz, subgoal_priors, long_space, lat_space):
+        super().__init__(sim_state, start, max_cost, max_speed, receding_horiz, sensing_dist, sensing_horiz, prim_horiz, subgoal_priors, long_space, lat_space)
         self.horizon = horizon
         self.dt = dt
-        self.obstacles = obstacles
         self.robot_radius = robot_radius
         self.max_speed = max_speed
         self.static_obs = static_obstacles
@@ -143,7 +142,7 @@ class MPCLocalPlanner(LPSnav):
         for t, state in enumerate(trajectory):
             cost += self.get_cost(prev_state, state, np.array([u[2*t],u[2*t + 1]]), t)
             if self.static_obs is not None:
-                cost += self.obstacle_avoidance_cost(state, [u[2*t],u[2*t + 1]])
+                cost += self.obstacle_avoidance_cost(state)
             prev_state = state
             # cost += self.obstacle_cost(state)
         # self.pos_hist = np.roll(self.pos_hist, 1, axis=0)
@@ -168,22 +167,24 @@ class MPCLocalPlanner(LPSnav):
         next_y = y + vy * self.dt
         return np.array([next_x, next_y])
     
-    def obstacle_cost(self, state):
+    def obstacle_cost(self, state, t):
         cost = 0.0
         x = state[0]
         y = state[1]
-        for j in range(self.obstacles.shape[0]): # for each obstacle
-            ox = self.obstacles[j, 0]
-            oy = self.obstacles[j, 1]
-            orad = self.obstacles[j, 2]
+        for idx, human_state in enumerate(self.state.human_states): # for each obstacle
+            ox = human_state.px
+            oy = human_state.py
+            next_x = ox + human_state.vx * self.dt *(t+1)
+            next_y = oy + human_state.vy * self.dt *(t+1)
             # if the obstacle intersects with a point on the arc. i.e. there is a collision on the arc
-            dist = np.sqrt((x - ox)**2 + (y - oy)**2)
-            if dist < 2.0:
+            dist = np.sqrt((x - next_x)**2 + (y - next_y)**2)
+            if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 100/dist
+                cost =+ 3.5/dist
         return (cost)
     
-    def obstacle_avoidance_cost(self, state, u):
+    
+    def obstacle_avoidance_cost(self, state):
         """
         Defines a set of inequality constraints for obstacle avoidance using shapely.
         

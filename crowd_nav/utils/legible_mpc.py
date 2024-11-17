@@ -69,11 +69,11 @@ class AncaLegible():
         return P, tc
     
 class MPCLocalPlanner(AncaLegible):
-    def __init__(self, horizon, dt, obstacles, static_obstacles, goal, other_goals, start, nframes, skipFrames, robot_radius, max_speed, current_trajectory, legible_horizon):
+    def __init__(self, horizon, dt, static_obstacles, goal, other_goals, start, sim_state, nframes, skipFrames, robot_radius, max_speed, current_trajectory, legible_horizon):
         super().__init__(goal, other_goals, start, current_trajectory, nframes, skipFrames, legible_horizon)
+        self.state = sim_state
         self.horizon = horizon
         self.dt = dt
-        self.obstacles = obstacles
         self.robot_radius = robot_radius
         self.max_speed = max_speed
         self.static_obs = static_obstacles
@@ -83,8 +83,9 @@ class MPCLocalPlanner(AncaLegible):
         cost = 0
         for t, state in enumerate(trajectory):
             cost += self.LegibleCost(t, state)
-            cost += self.obstacle_cost(state)
-            cost += self.collision_avoidance_cost(state)
+            cost += self.obstacle_cost(state, t)
+            if self.static_obs is not None:
+                cost += self.obstacle_avoidance_cost(state)
         return cost
 
     def simulate_trajectory(self, initial_state, controls):
@@ -104,31 +105,56 @@ class MPCLocalPlanner(AncaLegible):
         next_y = y + vy * self.dt
         return np.array([next_x, next_y])
 
-    def obstacle_cost(self, state):
+    def obstacle_cost(self, state, t):
         cost = 0.0
         x = state[0]
         y = state[1]
-        for j in range(self.obstacles.shape[0]): # for each obstacle
-            ox = self.obstacles[j, 0]
-            oy = self.obstacles[j, 1]
-            orad = self.obstacles[j, 2]
+        for idx, human_state in enumerate(self.state.human_states): # for each obstacle
+            ox = human_state.px
+            oy = human_state.py
+            next_x = ox + human_state.vx * self.dt *(t+1)
+            next_y = oy + human_state.vy * self.dt *(t+1)
             # if the obstacle intersects with a point on the arc. i.e. there is a collision on the arc
-            dist = np.sqrt((x - ox)**2 + (y - oy)**2)
+            dist = np.sqrt((x - next_x)**2 + (y - next_y)**2)
             if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 10/dist
+                cost =+ 3.5/dist
         return (cost)
     
-    def collision_avoidance_cost(self,state):
-        polygons = []
+    # def collision_avoidance_cost(self,state):
+    #     polygons = []
+    #     for obs in self.static_obs:
+    #         polygons.append(Polygon(obs))
+    #     polygon = MultiPolygon(polygons)
+    #     Point_state = Point(state)
+    #     if polygon.contains(Point_state):
+    #         cost = 10
+    #     else:
+    #         cost =  -1
+    #     return cost
+    
+    def obstacle_avoidance_cost(self, state):
+        """
+        Defines a set of inequality constraints for obstacle avoidance using shapely.
+        
+        Args:
+        traj_points: List of points in the trajectory [(x1, y1), (x2, y2), ..., (xn, yn)].
+        polygons: List of shapely polygons, where each polygon is a shapely Polygon object.
+        
+        Returns:
+        constraints: List of constraints for scipy.minimize, ensuring that trajectory points do not enter any polygon.
+        """
+        cost = 0
+        min_dist = 100000000000000000
         for obs in self.static_obs:
-            polygons.append(Polygon(obs))
-        polygon = MultiPolygon(polygons)
-        Point_state = Point(state)
-        if polygon.contains(Point_state):
-            cost = 10
-        else:
-            cost =  -1
+            polygon = Polygon(obs)
+            dist = polygon.distance(Point(state))
+            if min_dist > dist:
+                min_dist =  dist
+                if 0 < min_dist < 0.4:
+                    cost += 3.5/dist
+                elif min_dist == 0:
+                    cost += 10000
         return cost
 
     def point_to_segment_dist(self, x1, y1, x2, y2, x3, y3):
@@ -167,7 +193,7 @@ class MPCLocalPlanner(AncaLegible):
 
     def plan(self, current_state):
         n_controls = self.horizon * 2  # 2 control inputs (vx, vy) per timestep
-        initial_guess = np.ones(n_controls)
+        initial_guess = 0.001*np.ones(n_controls)
         # constraints = {'type': 'ineq', 'fun': lambda u: self.constraint(u, current_state)}
         result = minimize(
             self.objective,

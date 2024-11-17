@@ -66,7 +66,7 @@ class BaseEnvConfig(object):
     env.robot_sensor_range = 5
     env.dx_range = [-5, 5]
     env.dy_range = [-5, 5]
-    env.other_goals = None # env.other_goals = np.array([[-4,0],[4,0]])
+    env.other_goals = np.array([[-4,0],[4,0]]) # only applicable when using anca's legiblity
     env.obstacle = False
     env.test = True #if true all policy will the below agent state for spawning humans
     env.static_obstacles = [[(-5, 5), (-1, 5), (-1, 1), (-5, 1)],[(5, 5), (1, 5), (1, 1), (5, 1)],[(5, -5), (1, -5), (1, -1), (5, -1)], [(-5, -5), (-1, -5), (-1, -1), (-5, -1)]]

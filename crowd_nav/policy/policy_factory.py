@@ -10,6 +10,7 @@ from crowd_nav.policy.vecMPC.controller import vecMPC
 from crowd_nav.policy.vecMPC.controller_mppi import vecMPPI
 from crowd_nav.policy.social_momentum import SMLegible
 from crowd_nav.policy.lpsnav import LPSnavLegible
+from crowd_nav.policy.mpc import MPC
 
 policy_factory['cadrl'] = CADRL
 policy_factory['lstm_rl'] = LstmRL
@@ -22,3 +23,4 @@ policy_factory['dwa'] = DynamicWindowApproach
 policy_factory['legible'] = Legible
 policy_factory['sm_legible'] = SMLegible
 policy_factory['lpsnav'] = LPSnavLegible
+policy_factory['mpc'] = MPC
