@@ -28,20 +28,20 @@ class BaseExperimentsConfig(object):
     #                          ['passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing', 'passing_crossing']]
 
     ###visualize####
-    exp.num_orca = [[[1]]]
-    exp.num_sf = [[[0]]]
-    exp.num_linear = [[[0]]]
-    exp.num_static = [[[0]]]
-    exp.randomize_attributes = [[False]]
-    
-    exp.scenarios = [['passing_crossing']]
+    exp.num_orca = [[[1],[1],[1]],[[0],[0],[0]],[[0],[0],[0]]]
+    exp.num_sf = [[[0],[0],[0]],[[1],[1],[1]],[[0],[0],[0]]]
+    exp.num_linear = [[[0],[0],[0]],[[0],[0],[0]],[[1],[1],[1]]]
+    exp.num_static = [[[0],[0],[0]],[[0],[0],[0]],[[0],[0],[0]]]
+    exp.randomize_attributes = [[False, False, False],[False, False, False],[False, False, False]]
+    exp.agent_state = [[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 3, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]],[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 3, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]],[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 3, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]]] 
+    exp.scenarios = [['passing_crossing','passing_crossing','passing_crossing'],['passing_crossing','passing_crossing','passing_crossing'],['passing_crossing','passing_crossing','passing_crossing']]
     
     exp.parameter_sweep = None
     exp.sigma = [0.3, 0.6, 0.9]
     exp.q = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
     
-    exp.dx = [[[-5, 5]]]
-    exp.dy = [[[-5, 5]]]
+    exp.dx = [[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]]]
+    exp.dy = [[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]]]
     
     exp.parameter_sweep = None
     exp.sigma = [0.3, 0.6, 0.9]
@@ -67,9 +67,9 @@ class BaseEnvConfig(object):
     env.dx_range = [-5, 5]
     env.dy_range = [-5, 5]
     env.other_goals = np.array([[-4,0],[4,0]]) # only applicable when using anca's legiblity
-    env.obstacle = False
+    env.obstacle = True
     env.test = True #if true all policy will the below agent state for spawning humans
-    env.static_obstacles = [[(-5, 5), (-1, 5), (-1, 1), (-5, 1)],[(5, 5), (1, 5), (1, 1), (5, 1)],[(5, -5), (1, -5), (1, -1), (5, -1)], [(-5, -5), (-1, -5), (-1, -1), (-5, -1)]]
+    env.static_obstacles = [[(-5, 5), (-1.5, 5), (-1.5, 1.5), (-5, 1.5)],[(5, 5), (1.5, 5), (1.5, 1.5), (5, 1.5)],[(5, -5), (1.5, -5), (1.5, -1.5), (5, -1.5)], [(-5, -5), (-1.5, -5), (-1.5, -1.5), (-5, -1.5)]]
     env.agent_state = [[-2, 0, 4, 0, 0, 0, np.pi / 2]] #position for agents when static or when test is true
     env.robot_state = [0, -4, 0, 4, 0, 0, np.pi / 2]
 
@@ -94,7 +94,7 @@ class BaseEnvConfig(object):
     humans.visible = True
     humans.policy = 'multipolicy'
     humans.radius = 0.3
-    humans.v_pref = 1
+    humans.v_pref = 0.5
     humans.sensor = 'coordinates'
     humans.num_sf = [0]
     humans.num_orca = [4]

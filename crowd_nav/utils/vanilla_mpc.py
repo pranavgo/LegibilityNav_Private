@@ -21,11 +21,10 @@ class MPCLocalPlanner():
         trajectory = self.simulate_trajectory(current_state, u)
         cost = 0
         for t, state in enumerate(trajectory):
-            cost += self.goal_cost(state)
+            cost += 2*self.goal_cost(state)
             cost += self.obstacle_cost(state, t)
             if self.static_obs is not None:
                 cost += self.obstacle_avoidance_cost(state)
-            print(cost)
         return cost
 
     def simulate_trajectory(self, initial_state, controls):

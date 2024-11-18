@@ -69,7 +69,6 @@ class MPCLocalPlanner(SMLegible):
             cost += self.get_sm_cost(state,prev_state, [u[2*t],u[2*t + 1]])
             if self.static_obs is not None:
                 cost += self.obstacle_avoidance_cost(state)
-            print(cost)
             prev_state = state
             # cost += self.obstacle_cost(state)
         return cost

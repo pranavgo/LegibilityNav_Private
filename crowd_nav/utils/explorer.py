@@ -47,6 +47,8 @@ class Explorer(object):
         timeout_cases = []
         average_accelerations = []
         average_path_irregularity = []
+        average_human_path_irregularity = []
+        average_human_accelerations = []
 
         if k != 1:
             pbar = tqdm(total=k)
@@ -64,21 +66,36 @@ class Explorer(object):
             actions = []
             rewards = []
             pis = []
+            human_num = len(self.env.humans)
+            humanpis = {key: [] for key in range(human_num)}
+            human_path_length = {key: 0.0 for key in range(human_num)}
             path_length = 0.0
             while not done:
+                hstates = {}
+                prevhstates = {}
+                for t,human in enumerate(self.env.humans):
+                    prevhstates[t] = human.get_full_state()
+
                 rstate = self.robot.get_full_state()
                 prev_pos = [rstate.px, rstate.py]
                 action = self.robot.act(ob, self.env.orca_border, baseline=baseline)
                 rstate = self.robot.get_full_state()
-
                 ob, reward, done, info = self.env.step(action, baseline=baseline)
+
+                for t,human in enumerate(self.env.humans):
+                    hstates[t] = human.get_full_state()
+                    humandiff = np.sqrt((hstates[t].gx - hstates[t].px)**2 + (hstates[t].gy - hstates[t].py)**2)
+                    humanpis[t].append(self.compute_path_irregularity(ActionXY(hstates[t].vx,hstates[t].vy), ActionXY((hstates[t].gx - hstates[t].px) / humandiff, (hstates[t].gy - hstates[t].py) / humandiff)))
+                    human_path_length[t] = human_path_length[t] + np.sqrt((hstates[t].px - prevhstates[t].px)**2 + (hstates[t].px - prevhstates[t].py)**2)
+
                 new_pos = [self.robot.get_full_state().px, self.robot.get_full_state().py]
                 path_length = path_length + np.sqrt((new_pos[0] - prev_pos[0])**2 + (new_pos[1] - prev_pos[1])**2)
                 states.append(self.robot.policy.last_state)
                 actions.append(action)
                 rewards.append(reward)
 
-                diff = (rstate.gx - rstate.px)**2 + (rstate.gy - rstate.py)**2
+
+                diff = np.sqrt((rstate.gx - rstate.px)**2 + (rstate.gy - rstate.py)**2)
                 pis.append(self.compute_path_irregularity(action, ActionXY((rstate.gx - rstate.px) / diff, (rstate.gy - rstate.py) / diff)))
 
                 if isinstance(info, Discomfort):
@@ -93,6 +110,13 @@ class Explorer(object):
                 min_distances_overall.append(self.env.min_dist_overall)
                 average_accelerations.append(sum(self.env.robot_accelerations) / len(self.env.robot_accelerations))
                 average_path_irregularity.append(sum(pis) / path_length)
+                hpir = []
+                hum_acc = []
+                for t in range(human_num):
+                    hpir.append(sum(humanpis[t])/human_path_length[t])
+                    hum_acc.append(sum(self.env.human_accelerations[t])/len(self.env.human_accelerations[t]))
+                average_human_path_irregularity.append((sum(hpir)/human_num))
+                average_human_accelerations.append(sum(hum_acc)/human_num)
 
             elif isinstance(info, Collision):
                 print("ADDING COLLISION")
@@ -134,13 +158,14 @@ class Explorer(object):
             return stats, exp_stats
 
         average_acceleration = sum(average_accelerations) / success
-
+        average_human_acceleration = sum(average_human_accelerations) / success
         assert success + collision + timeout == k
         avg_nav_time = sum(success_times) / success
 
         avg_min_dist = sum(min_distances) / sum(timesteps)
         avg_min_dist_overall = sum(min_distances_overall) / success
         avg_pi = sum(average_path_irregularity) / success
+        avg_hpi = sum(average_human_path_irregularity)/success
         diff_accel = 0.0
         diff_dist = 0.0
         diff_time = 0.0
@@ -171,7 +196,7 @@ class Explorer(object):
             total_time = sum(success_times + collision_times + timeout_times)
 
         self.statistics = success_rate, collision_rate, avg_nav_time, average(cumulative_rewards), average(average_returns)
-        self.exp_stats = success_rate, success_std, collision_rate, collision_std, timeout_rate, timeout_std, avg_nav_time, nav_time_std, avg_min_dist, min_dist_std, average_acceleration, avg_accel_std, avg_min_dist_overall, min_dist_overall_std, avg_pi, avg_pi_std
+        self.exp_stats = success_rate, success_std, collision_rate, collision_std, timeout_rate, timeout_std, avg_nav_time, nav_time_std, avg_min_dist, min_dist_std, avg_min_dist_overall, min_dist_overall_std, avg_hpi, average_human_acceleration
 
         return self.statistics, self.exp_stats
     

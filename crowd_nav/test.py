@@ -91,9 +91,9 @@ def main_experiments(args):
         if args.human_num is not None:
             env_config.sim.human_num = args.human_num
         env = gym.make('CrowdSim-v0')
-        e = 0
-        se = 0
-
+        e = 2
+        se = 1
+        env_config.env.agent_state = ec.exp.agent_state[e][se]
         env_config.env.dx_range = ec.exp.dx[e][se]
         env_config.env.dy_range = ec.exp.dy[e][se]
         env_config.sim.test_scenario = ec.exp.scenarios[e][se]
@@ -140,7 +140,7 @@ def main_experiments(args):
             * reward for t, reward in enumerate(rewards)])
         
         time_end = time.time()
-
+        print(env.human_accelerations)
         if args.traj:
             env.render('traj', args.video_file)
         else:
@@ -258,7 +258,7 @@ def main_experiments(args):
                     env_config.humans.num_static = ec.exp.num_static[e][se]
                     env_config.humans.num_linear = ec.exp.num_linear[e][se]
                     env_config.sim.test_scenario = ec.exp.scenarios[e][se]
-
+                    env_config.env.agent_state = ec.exp.agent_state[e][se]
                     if args.human_num is not None:
                         env_config.sim.human_num = args.human_num
                     env = gym.make('CrowdSim-v0')
@@ -289,6 +289,7 @@ def main_experiments(args):
                     policy.set_env(env)
 
                     stats, exp_stats = explorer.run_k_episodes(env.case_size[args.phase], args.phase, print_failure=True, baseline=baseline)
+                    print(exp_stats[-1])
                     exp_stats_list.append(exp_stats)
                     print(exp_stats_list)
                     if args.plot_test_scenarios_hist:

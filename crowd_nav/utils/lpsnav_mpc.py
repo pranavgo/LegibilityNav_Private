@@ -147,7 +147,6 @@ class MPCLocalPlanner(LPSnav):
             # cost += self.obstacle_cost(state)
         # self.pos_hist = np.roll(self.pos_hist, 1, axis=0)
         # self.pos_hist[0] = np.array(state[:2])
-        print(cost)
         return cost
 
     def simulate_trajectory(self, initial_state, controls):
