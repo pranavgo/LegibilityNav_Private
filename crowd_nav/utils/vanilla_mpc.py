@@ -57,7 +57,7 @@ class MPCLocalPlanner():
             dist = np.sqrt((x - next_x)**2 + (y - next_y)**2)
             if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 3.5/dist
+                cost =+ 0.40/(1 + dist)
         return (cost)
     
     # def collision_avoidance_cost(self,state):

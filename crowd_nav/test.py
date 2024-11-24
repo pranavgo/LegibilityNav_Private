@@ -91,12 +91,17 @@ def main_experiments(args):
         if args.human_num is not None:
             env_config.sim.human_num = args.human_num
         env = gym.make('CrowdSim-v0')
-        e = 2
-        se = 1
+        e = 0
+        se = 0
         env_config.env.agent_state = ec.exp.agent_state[e][se]
         env_config.env.dx_range = ec.exp.dx[e][se]
         env_config.env.dy_range = ec.exp.dy[e][se]
         env_config.sim.test_scenario = ec.exp.scenarios[e][se]
+        env_config.env.randomize_attributes = ec.exp.randomize_attributes[e][se]
+        env_config.humans.num_sf = ec.exp.num_sf[e][se]
+        env_config.humans.num_orca = ec.exp.num_orca[e][se]
+        env_config.humans.num_static = ec.exp.num_static[e][se]
+        env_config.humans.num_linear = ec.exp.num_linear[e][se]
         env.configure(env_config)
 
         robot = Robot(env_config, 'robot')
@@ -140,7 +145,6 @@ def main_experiments(args):
             * reward for t, reward in enumerate(rewards)])
         
         time_end = time.time()
-        print(env.human_accelerations)
         if args.traj:
             env.render('traj', args.video_file)
         else:
@@ -250,6 +254,11 @@ def main_experiments(args):
                     #if e == 0 and se == 6:
                     #    continue
                     # configure environment
+                    # e = 2
+                    # se = 0
+                    if args.human_num is not None:
+                        env_config.sim.human_num = args.human_num
+                    env = gym.make('CrowdSim-v0')
                     env_config.env.dx_range = ec.exp.dx[e][se]
                     env_config.env.dy_range = ec.exp.dy[e][se]
                     env_config.env.randomize_attributes = ec.exp.randomize_attributes[e][se]
@@ -259,9 +268,6 @@ def main_experiments(args):
                     env_config.humans.num_linear = ec.exp.num_linear[e][se]
                     env_config.sim.test_scenario = ec.exp.scenarios[e][se]
                     env_config.env.agent_state = ec.exp.agent_state[e][se]
-                    if args.human_num is not None:
-                        env_config.sim.human_num = args.human_num
-                    env = gym.make('CrowdSim-v0')
                     env.configure(env_config)
 
                     robot = Robot(env_config, 'robot')
@@ -287,9 +293,35 @@ def main_experiments(args):
                         logging.info('ORCA agent buffer: %f', robot.policy.safety_space)
 
                     policy.set_env(env)
+                    # rewards = []
+                    # time_start = time.time()
+                    # ob = env.reset(args.phase, scenarios[e][se][1], goals[e][se][1])
+                    # done = False
+                    # last_pos = np.array(robot.get_position())
+                    # while not done:
+                    #     action = robot.act(ob, border=env.orca_border, baseline=baseline)
+                    #     ob, _, done, info = env.step(action)
+                    #     rewards.append(_)
+                    #     current_pos = np.array(robot.get_position())
+                    #     logging.debug('Speed: %.2f', np.linalg.norm(current_pos - last_pos) / robot.time_step)
+                    #     last_pos = current_pos
+                    # gamma = 0.9
+                    # cumulative_reward = sum([pow(gamma, t * robot.time_step * robot.v_pref)
+                    #     * reward for t, reward in enumerate(rewards)])
+                    
+                    # time_end = time.time()
+                    # if args.traj:
+                    #     env.render('traj', args.video_file)
+                    # else:
+                    #     if args.video_file is not None:
+                    #         if policy_config.name == 'gcn':
+                    #             args.video_file = os.path.join(args.video_dir, policy_config.name + '_' + policy_config.gcn.similarity_function)
+                    #         else:
+                    #             args.video_file = os.path.join(args.video_dir, args.video_file)
+                    #         #args.video_file = args.video_file + '_' + args.phase + '_' + str(args.test_case) + '.mp4'
+                    #     env.render('video', args.video_file)
 
                     stats, exp_stats = explorer.run_k_episodes(env.case_size[args.phase], args.phase, print_failure=True, baseline=baseline)
-                    print(exp_stats[-1])
                     exp_stats_list.append(exp_stats)
                     print(exp_stats_list)
                     if args.plot_test_scenarios_hist:
@@ -298,8 +330,8 @@ def main_experiments(args):
                         n, bins, patches = plt.hist(test_angle_seeds, b, facecolor='g')
                         plt.savefig(os.path.join(args.model_dir, 'test_scene_hist.png'))
                         plt.close()
-
-            with open(args.results_file, "w") as results:
+            results_file = args.results_file + str(args.policy) + '.json'
+            with open(results_file, "w") as results:
                 json.dump(exp_stats_list, results)
 
             
@@ -320,7 +352,7 @@ if __name__ == '__main__':
     parser.add_argument('--scenario', type=str, default='circle')
     parser.add_argument('--video_file', type=str, default='legible.mp4')
     parser.add_argument('--video_dir', type=str, default='./')
-    parser.add_argument('--results_file', type=str, default='results.json')
+    parser.add_argument('--results_file', type=str, default='/home/prgoyal/LegibilityNav_Private/corr_results_')
     parser.add_argument('--traj', default=False, action='store_true')
     parser.add_argument('--debug', default=False, action='store_true')
     parser.add_argument('--human_num', type=int, default=None)

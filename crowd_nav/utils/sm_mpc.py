@@ -10,6 +10,7 @@ class SMLegible():
         self.agent_weights = []
         self.sm_weight = sm_weight
         self.max_goal_score = np.linalg.norm(np.array(self.state.robot_state.goal_position) - start)
+        self.pred_pose = 0
 
     def get_interacting_agents(self, state):
         self.interacting_agents = []
@@ -26,20 +27,23 @@ class SMLegible():
                 self.interacting_agents.append(human_state)
                 self.agent_weights.append(1/distance_to_agent)
 
-    def get_sm_cost(self,state,prev_state, u):
+    def get_sm_cost(self,state,prev_state, u, t):
         cost = 0.0
         goal_score = np.linalg.norm(np.array(self.state.robot_state.goal_position) - state)/self.max_goal_score
         if self.interacting_agents:
             for i, agent in enumerate(self.interacting_agents):
-                agent_pos = np.array(agent.position)
+                if t == 0:
+                    agent_pos = np.array(agent.position)
+                else:
+                    agent_pos = self.pred_pose
                 r_c = (prev_state + agent_pos) / 2
                 r_ac = prev_state - r_c
                 r_bc = agent_pos - r_c
                 l_ab = np.cross(r_ac, np.array(self.state.robot_state.velocity)) + np.cross(r_bc, np.array(agent.velocity))
-                pred_pose = agent_pos + np.array(agent.velocity)*self.dt
-                r_c_hat = (state + pred_pose) / 2
+                self.pred_pose = agent_pos + np.array(agent.velocity)*self.dt
+                r_c_hat = (state + self.pred_pose) / 2
                 r_ac_hat = state - r_c_hat
-                r_bc_hat = pred_pose - r_c_hat
+                r_bc_hat = self.pred_pose - r_c_hat
                 l_ab_hat = np.cross(r_ac_hat, np.array([u[0],u[1]])) + np.cross(r_bc_hat, np.array(agent.velocity))
                 if np.dot(l_ab, l_ab_hat) > 0:
                     cost += -1 *self.sm_weight*(np.abs(l_ab_hat))*self.agent_weights[i]
@@ -66,7 +70,7 @@ class MPCLocalPlanner(SMLegible):
         prev_state = current_state
         cost = 0
         for t, state in enumerate(trajectory):
-            cost += self.get_sm_cost(state,prev_state, [u[2*t],u[2*t + 1]])
+            cost += self.get_sm_cost(state,prev_state, [u[2*t],u[2*t + 1]], t)
             if self.static_obs is not None:
                 cost += self.obstacle_avoidance_cost(state)
             prev_state = state
@@ -104,7 +108,7 @@ class MPCLocalPlanner(SMLegible):
             dist = np.sqrt((x - next_x)**2 + (y - next_y)**2)
             if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 3.5/dist
+                cost =+ 0.4/(1 + np.exp(dist))
         return (cost)
     
 

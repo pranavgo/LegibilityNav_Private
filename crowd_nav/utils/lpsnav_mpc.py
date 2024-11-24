@@ -176,10 +176,10 @@ class MPCLocalPlanner(LPSnav):
             next_x = ox + human_state.vx * self.dt *(t+1)
             next_y = oy + human_state.vy * self.dt *(t+1)
             # if the obstacle intersects with a point on the arc. i.e. there is a collision on the arc
-            dist = np.sqrt((x - next_x)**2 + (y - next_y)**2)
+            dist = np.sqrt((x - ox)**2 + (y - oy)**2)
             if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 3.5/dist
+                cost =+ 0.33*np.exp(-dist)
         return (cost)
     
     
@@ -202,7 +202,7 @@ class MPCLocalPlanner(LPSnav):
             if min_dist > dist:
                 min_dist =  dist
                 if 0 < min_dist < 0.4:
-                    cost += 3.5/dist
+                    cost += np.exp(-min_dist)
                 elif min_dist == 0:
                     cost += 10000
         return cost

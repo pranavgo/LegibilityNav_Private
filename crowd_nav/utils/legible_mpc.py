@@ -118,9 +118,8 @@ class MPCLocalPlanner(AncaLegible):
             dist = np.sqrt((x - next_x)**2 + (y - next_y)**2)
             if dist < 1.0:
                 # calculate distance to obstacle from robot's current position
-                cost =+ 3.5/dist
+                cost =+ 0.40/(1 + dist)
         return (cost)
-    
     # def collision_avoidance_cost(self,state):
     #     polygons = []
     #     for obs in self.static_obs:
@@ -193,7 +192,7 @@ class MPCLocalPlanner(AncaLegible):
 
     def plan(self, current_state):
         n_controls = self.horizon * 2  # 2 control inputs (vx, vy) per timestep
-        initial_guess = 0.001*np.ones(n_controls)
+        initial_guess = 0.1*np.ones(n_controls)
         # constraints = {'type': 'ineq', 'fun': lambda u: self.constraint(u, current_state)}
         result = minimize(
             self.objective,

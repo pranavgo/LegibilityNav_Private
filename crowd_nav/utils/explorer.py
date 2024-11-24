@@ -22,8 +22,8 @@ class Explorer(object):
         self.goals = goals
 
     def compute_path_irregularity(self, action, direct_action):
-        a = np.arctan2(action.vx, action.vy)
-        da = np.arctan2(direct_action.vx, direct_action.vy)
+        a = np.arctan2(action.vy, action.vx)
+        da = np.arctan2(direct_action.vy, direct_action.vx)
         return np.abs(a - da)
 
     # @profile
@@ -80,13 +80,20 @@ class Explorer(object):
                 prev_pos = [rstate.px, rstate.py]
                 action = self.robot.act(ob, self.env.orca_border, baseline=baseline)
                 rstate = self.robot.get_full_state()
-                ob, reward, done, info = self.env.step(action, baseline=baseline)
+                ob, reward, done, info = self.env.step(action)
 
                 for t,human in enumerate(self.env.humans):
                     hstates[t] = human.get_full_state()
-                    humandiff = np.sqrt((hstates[t].gx - hstates[t].px)**2 + (hstates[t].gy - hstates[t].py)**2)
-                    humanpis[t].append(self.compute_path_irregularity(ActionXY(hstates[t].vx,hstates[t].vy), ActionXY((hstates[t].gx - hstates[t].px) / humandiff, (hstates[t].gy - hstates[t].py) / humandiff)))
-                    human_path_length[t] = human_path_length[t] + np.sqrt((hstates[t].px - prevhstates[t].px)**2 + (hstates[t].px - prevhstates[t].py)**2)
+                    humandiff = 2*np.sqrt((hstates[t].gx - hstates[t].px)**2 + (hstates[t].gy - hstates[t].py)**2)
+                    if hstates[t].vx == 0 and hstates[t].vy == 0:
+                        humanpis[t].append(0.0)
+                    else:
+                        humanpis[t].append(self.compute_path_irregularity(ActionXY(hstates[t].vx,hstates[t].vy), ActionXY((hstates[t].gx - hstates[t].px) / humandiff, (hstates[t].gy - hstates[t].py) / humandiff)))
+                    # print('real action ...................')
+                    # print(ActionXY(hstates[t].vx,hstates[t].vy))
+                    # print('direct action ...........')
+                    # print(ActionXY((hstates[t].gx - hstates[t].px) / humandiff, (hstates[t].gy - hstates[t].py) / humandiff))
+                    human_path_length[t] = human_path_length[t] + np.sqrt((hstates[t].px - prevhstates[t].px)**2 + (hstates[t].py - prevhstates[t].py)**2)
 
                 new_pos = [self.robot.get_full_state().px, self.robot.get_full_state().py]
                 path_length = path_length + np.sqrt((new_pos[0] - prev_pos[0])**2 + (new_pos[1] - prev_pos[1])**2)
@@ -127,6 +134,7 @@ class Explorer(object):
             elif isinstance(info, Timeout):
                 print("ADDING TIMEOUT")
                 timeout += 1
+                print(hstates[0].gy)
                 timeout_cases.append(i)
                 timeout_times.append(self.env.time_limit)
             else:

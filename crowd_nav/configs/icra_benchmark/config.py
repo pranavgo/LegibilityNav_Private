@@ -33,14 +33,14 @@ class BaseExperimentsConfig(object):
     exp.num_linear = [[[0],[0],[0]],[[0],[0],[0]],[[1],[1],[1]]]
     exp.num_static = [[[0],[0],[0]],[[0],[0],[0]],[[0],[0],[0]]]
     exp.randomize_attributes = [[False, False, False],[False, False, False],[False, False, False]]
-    exp.agent_state = [[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 3, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]],[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 3, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]],[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 3, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]]] 
-    exp.scenarios = [['passing_crossing','passing_crossing','passing_crossing'],['passing_crossing','passing_crossing','passing_crossing'],['passing_crossing','passing_crossing','passing_crossing']]
+    exp.agent_state = [[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 2, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]],[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 2, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]],[[[-2, 0, 4, 0, 0, 0, np.pi / 2]],[[0, -3, 0, 2, 0, 0, np.pi / 2]],[[0, 4, 0, -4, 0, 0, np.pi / 2]]]] 
+    exp.scenarios = [['passing','crossing','passing_crossing'],['passing','crossing','passing_crossing'],['passing','crossing','passing_crossing']]
     
     exp.parameter_sweep = None
     exp.sigma = [0.3, 0.6, 0.9]
     exp.q = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
     
-    exp.dx = [[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]]]
+    exp.dx = [[[-2, 2],[-2,2],[-2,2]],[[-2, 2],[-2,2],[-2,2]],[[-2, 2],[-2,2],[-2,2]]]
     exp.dy = [[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]],[[-5, 5],[-5,5],[-5,5]]]
     
     exp.parameter_sweep = None
@@ -59,16 +59,18 @@ class BaseEnvConfig(object):
     env.time_limit = 50
     env.time_step = 0.25
     env.val_size = 500
-    env.test_size = 2
+    env.test_size = 100
     env.train_size = np.iinfo(np.uint32).max - 2000
     env.randomize_attributes = False 
     #TODO: Make this work with pre-generating scenarios
     env.robot_sensor_range = 5
     env.dx_range = [-5, 5]
     env.dy_range = [-5, 5]
-    env.other_goals = np.array([[-4,0],[4,0]]) # only applicable when using anca's legiblity
-    env.obstacle = True
-    env.test = True #if true all policy will the below agent state for spawning humans
+    # only applicable when using anca's legiblity
+    #env.other_goals = np.array([[-4,0],[4,0]]) #intersection
+    env.other_goals = np.array([[-2,4],[2,4]])
+    env.obstacle = False
+    env.test = False #if true all policy will the below agent state for spawning humans
     env.static_obstacles = [[(-5, 5), (-1.5, 5), (-1.5, 1.5), (-5, 1.5)],[(5, 5), (1.5, 5), (1.5, 1.5), (5, 1.5)],[(5, -5), (1.5, -5), (1.5, -1.5), (5, -1.5)], [(-5, -5), (-1.5, -5), (-1.5, -1.5), (-5, -1.5)]]
     env.agent_state = [[-2, 0, 4, 0, 0, 0, np.pi / 2]] #position for agents when static or when test is true
     env.robot_state = [0, -4, 0, 4, 0, 0, np.pi / 2]
