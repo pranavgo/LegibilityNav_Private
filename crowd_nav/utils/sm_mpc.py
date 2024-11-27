@@ -30,6 +30,7 @@ class SMLegible():
     def get_sm_cost(self,state,prev_state, u, t):
         cost = 0.0
         goal_score = np.linalg.norm(np.array(self.state.robot_state.goal_position) - state)/self.max_goal_score
+        self.get_interacting_agents(state)
         if self.interacting_agents:
             for i, agent in enumerate(self.interacting_agents):
                 if t == 0:
@@ -171,7 +172,6 @@ class MPCLocalPlanner(SMLegible):
     #     return np.array(constraints)
         
     def plan(self, current_state):
-        self.get_interacting_agents(current_state)
         n_controls = self.horizon * 2  # 2 control inputs (vx, vy) per timestep
         initial_guess = 0.01*np.ones(n_controls)
         # constraints = {'type': 'ineq', 'fun': lambda u: self.obstacle_avoidance_constraint(u, current_state)}

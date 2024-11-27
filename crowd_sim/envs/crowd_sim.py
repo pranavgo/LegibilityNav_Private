@@ -165,7 +165,6 @@ class CrowdSim(gym.Env):
         self.num_steps = 0
         self.robot_velocities = []
         self.robot_accelerations = []
-
         self.current_scenario = self.test_scenario
         self.scenarios = None
         self.scenario_num = 0
@@ -263,9 +262,14 @@ class CrowdSim(gym.Env):
                     #print("RESET TIME")
                     for policy in scenario:
                         for n in range(len(scenario[policy])):
-                            human = self.generate_human_from_state(policy, scenario[policy][n], test_state = self.config.env.agent_state[n])
-                            self.humans.append(human)
-                            human.goals = goals[policy][n]
+                            if self.config.env.test:
+                                human = self.generate_human_from_state(policy, scenario[policy][n], test_state = self.config.env.agent_state[n])
+                                self.humans.append(human)
+                                human.goals = goals[policy][n]
+                            else:
+                                human = self.generate_human_from_state(policy, scenario[policy][n], test_state = None)
+                                self.humans.append(human)
+                                human.goals = goals[policy][n]
                             #print("STATE: ", scenario[policy][n])
                 else:
                     self.set_num_policies()
@@ -315,6 +319,8 @@ class CrowdSim(gym.Env):
         if hasattr(self.robot.policy, 'trajs'):
             self.trajs = list()
 
+        self.human_accelerations = {key: [] for key in range(len(self.humans))}
+        self.human_velocities = {key: [] for key in range(len(self.humans))}
         # get current observation
         if self.robot.sensor == 'coordinates':
             ob = self.compute_observation_for(self.robot)
@@ -517,6 +523,24 @@ class CrowdSim(gym.Env):
             if hasattr(self.robot.policy, 'traj'):
                 self.trajs.append(self.robot.policy.get_traj())
 
+            for k, human in enumerate(self.humans):
+                self.human_velocities[k].append([human.vx, human.vy])
+                if len(self.human_velocities[k]) > 4:
+                    vel1 = self.human_velocities[k][len(self.human_velocities[k]) - 1]
+                    vel2 = self.human_velocities[k][len(self.human_velocities[k]) - 2]
+                    if not self.nonstop_human or isinstance(human.policy, Linear):
+                        if not human.reached_destination():
+                            ax = (vel1[0] - vel2[0]) / self.time_step
+                            ay = (vel1[1] - vel2[1]) / self.time_step
+                            self.human_accelerations[k].append(np.sqrt(ax**2 + ay**2))
+                        else:
+                            self.human_accelerations[k].append(0.0)
+                    else:
+                        ax = (vel1[0] - vel2[0]) / self.time_step
+                        ay = (vel1[1] - vel2[1]) / self.time_step
+                        self.human_accelerations[k].append(np.sqrt(ax**2 + ay**2))
+
+                    
             # update all agents
             self.robot_velocities.append([self.robot.vx, self.robot.vy])
             if len(self.robot_velocities) > 2:
@@ -537,18 +561,17 @@ class CrowdSim(gym.Env):
                 if self.config.env.obstacle:
                     action = self.static_collison_avoidance(human,self.static_obstacles,action)
                 human.step(action)
-
                 if human.reached_destination():
-                    if self.nonstop_human:
+                    if self.nonstop_human and not isinstance(human.policy, Linear):
                         if human.v_pref > 1e-2:
                             agents = [human.get_set_state() for human in self.humans]
                             agents.append(self.robot.get_set_state())
                             #print("PREVIOUS GOAL: ", human.gx, human.gy) 
                             #self.generate_human_from_state(policy=human.policy.name, state=utils.generate_human_state(agents, self.x_width, self.y_width, self.discomfort_dist, None, self.current_scenario, start=(human.px, human.py)), human=human)
                             #print("HUMAN CURRENT GOAL: ", human.current_goal, len(human.goals), len(human.goals[human.current_goal]))
-                            human.gx = human.goals[human.current_goal][0]
-                            human.gy = human.goals[human.current_goal][1]
-                            human.current_goal = human.current_goal + 1
+                            # human.gx = human.goals[human.current_goal][0]
+                            # human.gy = human.goals[human.current_goal][1]
+                            # human.current_goal = human.current_goal + 1
                             #print("NEXT GOAL: ", human.gx, human.gy, human.current_goal)
                     else:
                         human.v_pref = 1e-2
@@ -682,7 +705,7 @@ class CrowdSim(gym.Env):
             goal = mlines.Line2D([self.robot.gx], [self.robot.gy],
                                  color=robot_color, marker='*', linestyle='None',
                                  markersize=15, label='Goal')
-            if self.other_goals is not None:
+            if self.robot.policy.name == 'legible':
                 other_goals = mlines.Line2D([self.other_goals[:,0]], [self.other_goals[:,1]],
                                     color='blue', marker='*', linestyle='None',
                                     markersize=15, label='Goal')

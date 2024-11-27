@@ -92,7 +92,7 @@ def main_experiments(args):
             env_config.sim.human_num = args.human_num
         env = gym.make('CrowdSim-v0')
         e = 0
-        se = 0
+        se = 1
         env_config.env.agent_state = ec.exp.agent_state[e][se]
         env_config.env.dx_range = ec.exp.dx[e][se]
         env_config.env.dy_range = ec.exp.dy[e][se]
@@ -321,7 +321,7 @@ def main_experiments(args):
                     #         #args.video_file = args.video_file + '_' + args.phase + '_' + str(args.test_case) + '.mp4'
                     #     env.render('video', args.video_file)
 
-                    stats, exp_stats = explorer.run_k_episodes(env.case_size[args.phase], args.phase, print_failure=True, baseline=baseline)
+                    stats, exp_stats = explorer.run_k_episodes(env.case_size[args.phase], args.phase, print_failure=True, baseline=baseline, e=e, se=se)
                     exp_stats_list.append(exp_stats)
                     print(exp_stats_list)
                     if args.plot_test_scenarios_hist:
@@ -352,7 +352,7 @@ if __name__ == '__main__':
     parser.add_argument('--scenario', type=str, default='circle')
     parser.add_argument('--video_file', type=str, default='legible.mp4')
     parser.add_argument('--video_dir', type=str, default='./')
-    parser.add_argument('--results_file', type=str, default='/home/prgoyal/LegibilityNav_Private/corr_results_')
+    parser.add_argument('--results_file', type=str, default='/home/prgoyal/LegibilityNav_Private/corr1_results_')
     parser.add_argument('--traj', default=False, action='store_true')
     parser.add_argument('--debug', default=False, action='store_true')
     parser.add_argument('--human_num', type=int, default=None)

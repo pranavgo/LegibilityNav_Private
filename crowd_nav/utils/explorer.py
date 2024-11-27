@@ -28,7 +28,7 @@ class Explorer(object):
 
     # @profile
     def run_k_episodes(self, k, phase, update_memory=False, imitation_learning=False, episode=None, epoch=None,
-                       print_failure=False, baseline=None):
+                       print_failure=False, baseline=None, e = None, se = None):
         self.robot.policy.set_phase(phase)
         success_times = []
         collision_times = []
@@ -56,6 +56,7 @@ class Explorer(object):
             pbar = None
 
         for i in range(k):
+            video_file = './exp_videos/check_' + str(e) + str(se) + '_' + str(i) + '.mp4'
             if self.scenarios is not None:
                 ob = self.env.reset(phase, self.scenarios[i], self.goals[i])
             else:
@@ -131,6 +132,7 @@ class Explorer(object):
                 collision_cases.append(i)
                 collision_times.append(self.env.global_time)
                 timesteps.append(self.env.num_steps)
+                self.env.render('video',video_file)
             elif isinstance(info, Timeout):
                 print("ADDING TIMEOUT")
                 timeout += 1
